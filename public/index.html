@@ -1,0 +1,168 @@
+<!-- public/index.html -->
+<!-- Checkout.com Flow integration (replaces deprecated Frames.js) -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>CKO Sandbox Demo — Flow</title>
+  <style>
+    body { font-family: sans-serif; max-width: 480px; margin: 60px auto; }
+    .field-row { margin: 12px 0; }
+    label { display: block; margin-bottom: 4px; font-size: 14px; }
+    input, select { padding: 8px; width: 100%; box-sizing: border-box; font-size: 14px; }
+    button#start-btn { padding: 10px 20px; cursor: pointer; margin-top: 8px; }
+    #flow-container { margin-top: 20px; }
+    #result { margin-top: 20px; padding: 12px; border-radius: 6px; }
+    .approved { background: #d4edda; color: #155724; }
+    .declined { background: #f8d7da; color: #721c24; }
+    .toast {
+      visibility: hidden; min-width: 250px; margin-left: -125px; color: #fff;
+      text-align: center; border-radius: 4px; padding: 16px; position: fixed;
+      z-index: 1; left: 50%; bottom: 20px; font-family: monospace; opacity: 0;
+    }
+    .toast.success { background-color: mediumseagreen; }
+    .toast.failed { background-color: indianred; }
+    .toast.show { visibility: visible; animation: fadein 5s; }
+    @keyframes fadein {
+      0% { bottom: 0; opacity: 0; }
+      16.667% { bottom: 30px; opacity: 1; }
+      83.333% { bottom: 30px; opacity: 1; }
+      100% { bottom: 0; opacity: 0; }
+    }
+  </style>
+</head>
+<body>
+  <h2>Checkout.com Sandbox Demo (Flow)</h2>
+
+  <div id="successToast" class="toast success"><span>Payment succeeded</span></div>
+  <div id="failedToast" class="toast failed"><span>Payment failed, try again</span></div>
+
+  <div class="field-row">
+    <label for="amount">Amount</label>
+    <input type="number" id="amount" min="0.01" step="0.01" value="10.00">
+  </div>
+
+  <div class="field-row">
+    <label for="currency">Currency</label>
+    <select id="currency">
+      <option value="USD" selected>USD</option>
+      <option value="GBP">GBP</option>
+      <option value="EUR">EUR</option>
+      <option value="SGD">SGD</option>
+      <option value="HKD">HKD</option>
+      <option value="JPY">JPY</option>
+    </select>
+  </div>
+
+  <button id="start-btn">Start payment</button>
+
+  <div id="flow-container"></div>
+  <div id="result"></div>
+
+  <!-- Per Checkout.com policy: load Flow only from this CDN URL for PCI compliance.
+       Never self-host or bundle this script. -->
+  <script src="https://checkout-web-components.checkout.com/index.js"></script>
+
+  <script>
+    const startBtn = document.getElementById('start-btn');
+    const amountInput = document.getElementById('amount');
+    const currencySelect = document.getElementById('currency');
+    const flowContainer = document.getElementById('flow-container');
+    const resultDiv = document.getElementById('result');
+
+    function triggerToast(id) {
+      const el = document.getElementById(id);
+      el.classList.add('show');
+      setTimeout(() => el.classList.remove('show'), 5000);
+    }
+
+    // Handle the redirect back from a 3DS challenge or APM redirect.
+    // Flow appends cko-payment-id (and sometimes status) as query params.
+    (function checkRedirectReturn() {
+      const params = new URLSearchParams(window.location.search);
+      const paymentId = params.get('cko-payment-id') || params.get('cko-session-id');
+      if (!paymentId) return;
+
+      resultDiv.innerHTML = '<p>Confirming payment status…</p>';
+      fetch(`/api/payment-status/${paymentId}`)
+        .then(r => r.json())
+        .then(data => {
+          const ok = data.status === 'Authorized' || data.status === 'Captured';
+          triggerToast(ok ? 'successToast' : 'failedToast');
+          resultDiv.className = ok ? 'approved' : 'declined';
+          resultDiv.innerHTML = `
+            <p><strong>Payment ID:</strong> ${data.id}</p>
+            <p><strong>Status:</strong> ${data.status}</p>
+          `;
+        })
+        .catch(err => {
+          resultDiv.className = 'declined';
+          resultDiv.innerHTML = `<p>Error confirming payment: ${err.message}</p>`;
+        });
+    })();
+
+    startBtn.addEventListener('click', async () => {
+      startBtn.disabled = true;
+      resultDiv.innerHTML = '';
+      flowContainer.innerHTML = '';
+
+      try {
+        const { publicKey } = await fetch('/api/config').then(r => r.json());
+
+        const sessionResponse = await fetch('/api/create-payment-session', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            amount: parseFloat(amountInput.value),
+            currency: currencySelect.value
+          })
+        });
+
+        const paymentSession = await sessionResponse.json();
+
+        if (!sessionResponse.ok) {
+          resultDiv.className = 'declined';
+          resultDiv.innerHTML = `<p>Could not create payment session: ${paymentSession.error || JSON.stringify(paymentSession)}</p>`;
+          startBtn.disabled = false;
+          return;
+        }
+
+        const checkout = await CheckoutWebComponents({
+          publicKey,
+          environment: 'sandbox',
+          locale: 'en-GB',
+          paymentSession,
+          onReady: () => console.log('Flow ready'),
+          onPaymentCompleted: async (_component, paymentResponse) => {
+            // Synchronous payment methods (e.g. card without 3DS) land here directly.
+            console.log('Payment completed:', paymentResponse.id);
+            const status = await fetch(`/api/payment-status/${paymentResponse.id}`).then(r => r.json());
+            const ok = status.status === 'Authorized' || status.status === 'Captured';
+            triggerToast(ok ? 'successToast' : 'failedToast');
+            resultDiv.className = ok ? 'approved' : 'declined';
+            resultDiv.innerHTML = `
+              <p><strong>Payment ID:</strong> ${status.id}</p>
+              <p><strong>Status:</strong> ${status.status}</p>
+            `;
+          },
+          onChange: (component) => {
+            console.log(`onChange -> isValid: ${component.isValid()} for ${component.type}`);
+          },
+          onError: (component, error) => {
+            console.error('Flow error', error, component?.type);
+            resultDiv.className = 'declined';
+            resultDiv.innerHTML = `<p>Payment error: ${error.message || 'Unknown error'}</p>`;
+          }
+        });
+
+        const flowComponent = checkout.create('flow');
+        flowComponent.mount('#flow-container');
+      } catch (err) {
+        resultDiv.className = 'declined';
+        resultDiv.innerHTML = `<p>Setup error: ${err.message}</p>`;
+        startBtn.disabled = false;
+      }
+    });
+  </script>
+</body>
+</html>
