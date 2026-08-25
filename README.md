@@ -11,7 +11,7 @@ Iterate the changes using Flow as main integration
 ### 1. End-to-end payment demo
 - test with auth (with 3DS default on)
 - test with different payment methods (visa/mc/amex by default setting)
-- test with decline cases, fraud decline or other card declines
+- test with decline cases or other card declines
 - Separate auth and capture
 - partial capture; multiple partial capture; overcapture (decline case)
 - refund; partial refund; overrefund
@@ -49,6 +49,12 @@ Iterate the changes using Flow as main integration
 ### 5. Partial + Full refunds
 - `POST /payments/{id}/refunds` supports refunding less than or equal the full captured amount,
   tested against a live sandbox transaction.
+
+### 6. other flows
+- void auth
+- recurring: MIT and CIT using terminal curl cmd ONLY because no time to implement
+- incremental auth (optional)
+
 
 ## What's Intentionally Out of Scope
 
