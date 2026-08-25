@@ -19,6 +19,7 @@ Iterate the changes using Flow as main integration
 ### 2. Auth/capture separation
 - Payments are created with `capture: false`, so funds are authorized but not
   immediately captured.
+  major reason to have separate auth and capture is because for most of ecommerce merchants, they are selling goods, they need to capture at the time goods and digital service is getting fulfilled. not recommending having auto-capture feature on unless it is gaming merchant (they sell gaming goods and tokens that automatically fulfilled) 
 - A separate call to `POST /payments/{id}/captures` finalizes the charge — modeling a
   real-world scenario where authorization and fulfillment happen at different times
   (e.g. capture-on-ship).
@@ -43,14 +44,16 @@ Iterate the changes using Flow as main integration
   success/fail flag.
 - Declined payments surface the `response_summary` field to explain *why* a payment
   failed, rather than a generic error.
+- Will also explore sandbox environment payment details page for demo purpose
 
-### 5. Partial refunds
-- `POST /payments/{id}/refunds` supports refunding less than the full captured amount,
+### 5. Partial + Full refunds
+- `POST /payments/{id}/refunds` supports refunding less than or equal the full captured amount,
   tested against a live sandbox transaction.
 
 ## What's Intentionally Out of Scope
 
-Disputes, fraud detection response codes, and bank payouts are separate product
+Disputes and bank payouts are separate product (cannot set up any bank accounts at sandbox environment)
+I can simulate a dispute case manually through sandbox dashboard for demo purpose
 surfaces not required by the brief's ask for "an end-to-end payment" and "a use case
 based on payment data." I reviewed Checkout.com's testing docs for these and can speak
 to how each would extend this integration, but did not build them here to keep the
