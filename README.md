@@ -95,4 +95,4 @@ flow:
 
 - `server.js` — Express backend: payment creation, webhook receiver, payment status
   lookup.
-- `index.html` / `public/` — minimal frontend for triggering a payment via Frames.js.
+- `index.html` / `public/` — minimal frontend for triggering a payment
