@@ -7,11 +7,10 @@ response data.
 ## What This Demonstrates
 
 ### 1. End-to-end payment
-- Frontend collects card details via Checkout.com Frames.js, tokenizes client-side,
-  and sends the token to `/api/pay`.
-- Backend creates a payment via `POST /payments`, with 3DS enabled for Strong Customer
-  Authentication.
 - Sandbox test card `4485040371536584` completes a full 3DS challenge flow.
+- Separate auth and capture
+- first integration is built on top of frame.js (legacy) --> this was a traditional approach with frame js on hands
+- iterate using Flow as main integration 
 
 ### 2. Auth/capture separation
 - Payments are created with `capture: false`, so funds are authorized but not
