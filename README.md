@@ -3,14 +3,18 @@
 A minimal Express backend + static frontend demonstrating a Checkout.com Payments API
 integration: end-to-end payment, webhook handling, and a use case built on payment
 response data.
+First integration is built on top of frame.js (legacy) --> this was a traditional approach with frame js on hands (so original frame code is still on js file, not removed)
+Iterate the changes using Flow as main integration 
 
-## What This Demonstrates
+## What to expect for demo
 
-### 1. End-to-end payment
-- Sandbox test card `4485040371536584` completes a full 3DS challenge flow.
+### 1. End-to-end payment demo
+- test with auth (with 3DS default on)
+- test with different payment methods (visa/mc/amex by default setting)
+- test with decline cases, fraud decline or other card declines
 - Separate auth and capture
-- first integration is built on top of frame.js (legacy) --> this was a traditional approach with frame js on hands
-- iterate using Flow as main integration 
+- partial capture; multiple partial capture; overcapture (decline case)
+- refund; partial refund; overrefund
 
 ### 2. Auth/capture separation
 - Payments are created with `capture: false`, so funds are authorized but not
