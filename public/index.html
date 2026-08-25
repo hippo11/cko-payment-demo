@@ -76,6 +76,23 @@
       setTimeout(() => el.classList.remove('show'), 5000);
     }
 
+    function renderResult(status) {
+      const ok = status.status === 'Authorized' || status.status === 'Captured';
+      triggerToast(ok ? 'successToast' : 'failedToast');
+      resultDiv.className = ok ? 'approved' : 'declined';
+
+      let html = `
+        <p><strong>Payment ID:</strong> ${status.id}</p>
+        <p><strong>Status:</strong> ${status.status}</p>
+      `;
+
+      if (!ok && status.declineReason) {
+        html += `<p><strong>Decline Reason:</strong> ${status.declineReason}</p>`;
+      }
+
+      resultDiv.innerHTML = html;
+    }
+
     // Handle the redirect back from a 3DS challenge or APM redirect.
     // Flow appends cko-payment-id (and sometimes status) as query params.
     (function checkRedirectReturn() {
@@ -86,15 +103,7 @@
       resultDiv.innerHTML = '<p>Confirming payment status…</p>';
       fetch(`/api/payment-status/${paymentId}`)
         .then(r => r.json())
-        .then(data => {
-          const ok = data.status === 'Authorized' || data.status === 'Captured';
-          triggerToast(ok ? 'successToast' : 'failedToast');
-          resultDiv.className = ok ? 'approved' : 'declined';
-          resultDiv.innerHTML = `
-            <p><strong>Payment ID:</strong> ${data.id}</p>
-            <p><strong>Status:</strong> ${data.status}</p>
-          `;
-        })
+        .then(data => renderResult(data))
         .catch(err => {
           resultDiv.className = 'declined';
           resultDiv.innerHTML = `<p>Error confirming payment: ${err.message}</p>`;
@@ -137,13 +146,7 @@
             // Synchronous payment methods (e.g. card without 3DS) land here directly.
             console.log('Payment completed:', paymentResponse.id);
             const status = await fetch(`/api/payment-status/${paymentResponse.id}`).then(r => r.json());
-            const ok = status.status === 'Authorized' || status.status === 'Captured';
-            triggerToast(ok ? 'successToast' : 'failedToast');
-            resultDiv.className = ok ? 'approved' : 'declined';
-            resultDiv.innerHTML = `
-              <p><strong>Payment ID:</strong> ${status.id}</p>
-              <p><strong>Status:</strong> ${status.status}</p>
-            `;
+            renderResult(status);
           },
           onChange: (component) => {
             console.log(`onChange -> isValid: ${component.isValid()} for ${component.type}`);

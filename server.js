@@ -21,6 +21,16 @@ const CKO_API_BASE = 'https://api.sandbox.checkout.com';
 
 const ZERO_DECIMAL_CURRENCIES = ['BIF', 'DJF', 'GNF', 'ISK', 'JPY', 'KMF', 'KRW', 'PYG', 'RWF', 'UGX', 'VUV', 'VND', 'XAF', 'XOF', 'XPF'];
 
+const PARTNER_RESPONSE_CODE_MESSAGES = {
+  '51': 'Insufficient funds',
+  '05': 'Do not honor',
+  '14': 'Invalid card number',
+  '54': 'Expired card',
+  '57': 'Transaction not permitted',
+  '61': 'Exceeds withdrawal limit',
+  '62': 'Restricted card'
+};
+
 function toMinorUnits(amount, currency) {
   const upperCurrency = currency.toUpperCase();
   if (ZERO_DECIMAL_CURRENCIES.includes(upperCurrency)) {
@@ -138,7 +148,22 @@ app.get('/api/payment-status/:id', async (req, res) => {
       headers: { 'Authorization': CKO_SECRET_KEY }
     });
     const payment = await response.json();
-    res.json(payment);
+    console.log('RAW PAYMENT OBJECT:', JSON.stringify(payment, null, 2));
+
+    let declineReason = null;
+if (payment.status === 'Declined') {
+  const partnerCode = payment.processing?.partner_response_code;
+  declineReason = payment.response_summary
+    || PARTNER_RESPONSE_CODE_MESSAGES[partnerCode]
+    || (partnerCode ? `Partner response code ${partnerCode}` : 'Unknown decline reason');
+}
+
+    res.json({
+      id: payment.id,
+      status: payment.status,
+      declineReason,
+      raw: payment
+    });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
