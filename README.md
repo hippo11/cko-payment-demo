@@ -16,6 +16,7 @@ Iterate the changes using Flow as main integration
 - full capture; partial capture; multiple partial capture; overcapture (decline case)
 - full refund; partial refund; overrefund
 - recurring (MIT + CIT) through direct API only integration
+- talk about idempotency 
 
 ### 2. Settings
 - sandbox environment default setting (no customization)
@@ -50,6 +51,13 @@ surfaces not required by the brief's ask for "an end-to-end payment" and "a use 
 based on payment data." I reviewed Checkout.com's testing docs for these and can speak
 to how each would extend this integration, but did not build them here to keep the
 demo focused.
+
+## reference
+First version of integration was on frame.js; since it was deprecated, using Flow will be better integration starting point
+detailed info:
+https://www.checkout.com/docs/developer-resources/testing/test-cards
+https://www.checkout.com/docs/developer-resources/event-notifications
+https://api-reference.checkout.com/tag/Payments
 
 ## Setup
 
