@@ -8,25 +8,20 @@ Iterate the changes using Flow as main integration
 
 ## What to expect for demo
 
-### 1. End-to-end payment demo
-- sandbox environment default setting (no customization)
-- test with auth (with 3DS default on)
-- test with different payment methods (visa/mc/amex by default setting)
-- test with decline cases
-- Separate auth and capture
-- partial capture; multiple partial capture; overcapture (decline case)
-- refund; partial refund; overrefund
+### 1. End-to-end payment demo cases
+- test with auth
+- test auth with different payment methods (visa/mc/amex by default setting) + different amount and currency combo
+- test auth different decline cases
+- void auth
+- full capture; partial capture; multiple partial capture; overcapture (decline case)
+- full refund; partial refund; overrefund
+- recurring (MIT + CIT) through direct API only integration
 
-### 2. Auth/capture separation
-- Payments are created with `capture: false`, so funds are authorized but not
-  immediately captured.
-  major reason to have separate auth and capture is because for most of ecommerce merchants, they are selling goods, they need to capture at the time goods and digital service is getting fulfilled. not recommending having auto-capture feature on unless it is gaming merchant (they sell gaming goods and tokens that automatically fulfilled) 
-- A separate call to `POST /payments/{id}/captures` finalizes the charge — modeling a
-  real-world scenario where authorization and fulfillment happen at different times
-  (e.g. capture-on-ship).
-- Multiple partial captures are supported by setting `capture_type: "NonFinal"` on all
-  but the last capture in a sequence, so the remaining authorized balance stays open
-  instead of auto-voiding after the first capture.
+### 2. Settings
+- sandbox environment default setting (no customization)
+it means default payment methods setup, no overcapture/overrefund allowed; no bank account getting configured;
+- 3DS default on
+- Separate auth and capture
 
 ### 3. Webhook handling
 - `POST /webhooks/checkout` receives asynchronous payment lifecycle events
@@ -38,21 +33,11 @@ Iterate the changes using Flow as main integration
 - Tunnelled to a public HTTPS endpoint via ngrok for local testing against
   Checkout.com's sandbox webhook dispatcher.
 
-### 4. Use case from payment data
-- On a successful payment, the response is inspected for `scheme` and `last4` to
-  generate a human-readable confirmation message — a simple example of branching
-  logic driven by data returned in the payment object, rather than just a static
-  success/fail flag.
-- Declined payments surface the `response_summary` field to explain *why* a payment
-  failed, rather than a generic error.
-- Will also explore sandbox environment payment details page for demo purpose
+### 4. Sandbox payment data review
+- Explore sandbox environment payment details page for demo purpose
 
-### 5. Partial + Full refunds
-- `POST /payments/{id}/refunds` supports refunding less than or equal the full captured amount,
-  tested against a live sandbox transaction.
-
-### 6. other flows
-- void auth
+### 5. other flows
+- adjust auth (optional)
 - recurring: MIT and CIT using terminal curl cmd ONLY because no time to implement
 - incremental auth (optional)
 
