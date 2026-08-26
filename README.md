@@ -52,10 +52,11 @@ based on payment data." I reviewed Checkout.com's testing docs for these and can
 to how each would extend this integration, but did not build them here to keep the
 demo focused.
 
-## reference
+## Reference
 First version of integration was on frame.js; since it was deprecated, using Flow will be better integration starting point
-detailed info:
+- Detailed info:
 https://www.checkout.com/docs/developer-resources/testing/test-cards
+
 https://www.checkout.com/docs/developer-resources/event-notifications
 https://api-reference.checkout.com/tag/Payments
 
