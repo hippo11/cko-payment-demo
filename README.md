@@ -9,9 +9,10 @@ Iterate the changes using Flow as main integration
 ## What to expect for demo
 
 ### 1. End-to-end payment demo
+- sandbox environment default setting (no customization)
 - test with auth (with 3DS default on)
 - test with different payment methods (visa/mc/amex by default setting)
-- test with decline cases or other card declines
+- test with decline cases
 - Separate auth and capture
 - partial capture; multiple partial capture; overcapture (decline case)
 - refund; partial refund; overrefund
